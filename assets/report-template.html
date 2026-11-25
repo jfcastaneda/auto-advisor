@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Auto Advisor report</title>
+<style>
+  @font-face {
+    font-family: "Archivo";
+    src: url(data:font/woff2;base64,__FONT_BASE64__) format("woff2");
+    font-weight: 100 900;
+    font-stretch: 62% 125%;
+    font-style: normal;
+    font-display: swap;
+  }
+  :root {
+    --paper: #ffffff;
+    --ground: #e9eeed;
+    --ink: #111417;
+    --ink-2: #374044;
+    --muted: #57626a;
+    --hair: #cdd5d4;
+    --teal: #0a6a76;
+    --teal-ink: #08535c;
+    --teal-tint: #dcefef;
+    --amber-ink: #7d4b00;
+    --amber-tint: #fbeccc;
+    --amber: #c98a12;
+    --red-ink: #9d2219;
+    --red-tint: #f9e0dc;
+    --green-ink: #1c6234;
+    --green-tint: #dff0e3;
+    --rail: 228px;
+    --gap: 24px;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  * { box-sizing: border-box; }
+  html { scrollbar-color: var(--ink-2) var(--ground); scroll-padding-top: 64px; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "Archivo", "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.5;
+    font-stretch: 100%; caret-color: var(--teal);
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--teal); color: #fff; }
+  a { color: var(--teal-ink); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+  :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .num, td.num, .figure { font-variant-numeric: tabular-nums lining-nums; }
+  .cond { font-stretch: 75%; }
+
+  /* Shell */
+  .shell {
+    position: sticky; top: 0; z-index: 20; background: var(--ink); color: #fff;
+    display: flex; align-items: center; gap: 14px; padding: 0 20px; height: 54px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; font-stretch: 75%; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; font-size: 14px; white-space: nowrap; }
+  .brand svg { flex: none; }
+  .shell .divider { width: 1px; height: 22px; background: #4a5257; }
+  .shell h1 { margin: 0; font-size: 17px; font-weight: 600; font-stretch: 85%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .shell .updated { margin-left: auto; color: #b9c2c5; font-size: 13px; white-space: nowrap; }
+
+  .sample-banner { background: var(--amber-tint); color: var(--amber-ink); border-bottom: 1.5px solid var(--amber-ink); padding: 6px 20px; font-size: 13px; font-weight: 700; }
+  .layout { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); min-height: calc(100vh - 54px);
+    background: linear-gradient(90deg, var(--paper) calc(var(--rail) - 1px), var(--hair) calc(var(--rail) - 1px) var(--rail), transparent var(--rail)); }
+
+  /* Rail (desktop) */
+  .rail { position: sticky; top: 54px; align-self: start; max-height: calc(100vh - 54px); overflow-y: auto; padding: 20px 0 32px; }
+  .rail .group { margin: 0 0 18px; }
+  .rail .group-label { padding: 0 20px 6px; font-size: 11.5px; font-weight: 700; font-stretch: 75%; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .rail a { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 7px 20px; color: var(--ink-2); text-decoration: none; font-weight: 500; }
+  .rail a:hover { background: var(--ground); color: var(--ink); }
+  .rail a[aria-current="page"] { background: var(--teal-tint); color: var(--teal-ink); font-weight: 700; box-shadow: inset 0 0 0 1px var(--teal); }
+  .rail a .figure { font-size: 12.5px; color: var(--muted); font-weight: 500; }
+  .rail a[aria-current="page"] .figure { color: var(--teal-ink); }
+
+  /* Tabs (mobile) */
+  .tabs { display: none; }
+
+  main { padding: 28px 32px 56px; min-width: 0; }
+  .view { display: none; max-width: 1180px; }
+  .view.active { display: block; }
+  .view:focus { outline: none; }
+  .view-title { margin: 0 0 16px; font-size: 30px; line-height: 1.1; font-weight: 800; font-stretch: 75%; letter-spacing: -0.005em; text-wrap: balance; }
+  .view-sub { margin: -10px 0 18px; color: var(--ink-2); }
+
+  /* The sticker sheet */
+  .sheet { background: var(--paper); border: 2px solid var(--ink); }
+  .sheet + .sheet { margin-top: var(--gap); }
+  .sec { border-top: 2px solid var(--ink); }
+  .sec:first-child { border-top: 0; }
+  .sec-head {
+    margin: 0; background: var(--ink); color: #fff; padding: 6px 14px 5px;
+    font-size: 12.5px; font-weight: 700; font-stretch: 75%; letter-spacing: 0.08em; text-transform: uppercase;
+    display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
+  }
+  .sec-head h2 { margin: 0; font: inherit; letter-spacing: inherit; }
+  .sec-head .aside { font-weight: 500; letter-spacing: 0.04em; color: #c5ced0; text-transform: none; font-stretch: 85%; }
+  .body { padding: 16px 18px 18px; }
+  .body > p:first-child { margin-top: 0; }
+  .body > p:last-child { margin-bottom: 0; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; }
+  .split > .sec { border-top: 2px solid var(--ink); }
+  .split > .sec + .sec, .split > .col { border-left: 2px solid var(--ink); }
+  .split > .col { border-top: 2px solid var(--ink); }
+  .split > .col > .sec:first-child { border-top: 0; }
+  .prose { max-width: 70ch; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+
+  /* Label grid (ruled cells) */
+  .cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .cell { padding: 10px 14px 11px; border-right: 1px solid var(--ink); border-bottom: 1px solid var(--ink); margin: 0 -1px -1px 0; }
+  .cell dt { font-size: 11.5px; font-weight: 700; font-stretch: 75%; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin: 0 0 2px; }
+  .cell dd { margin: 0; font-weight: 600; }
+  .cells-wrap { overflow: hidden; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+  thead th { font-size: 11.5px; font-weight: 700; font-stretch: 75%; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-2); border-bottom: 1.5px solid var(--ink); background: var(--paper); }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tr.total td { font-weight: 800; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); background: var(--teal-tint); }
+  tbody tr.total:last-child td { border-bottom: 0; }
+  .table-wrap { overflow-x: auto; }
+  .name-cell a { font-weight: 700; color: var(--ink); text-decoration-color: var(--hair); }
+  .name-cell a:hover { text-decoration-color: var(--ink); }
+  .name-cell .meta { display: block; font-size: 12.5px; color: var(--muted); }
+  .name-cell .meta a { font-weight: 500; color: var(--teal-ink); }
+  table.levers td:first-child { width: 210px; }
+  .cmp td.num .small { display: inline-block; white-space: normal; line-height: 1.3; }
+
+  /* Status tags */
+  .tag { display: inline-block; padding: 1px 7px 2px; font-size: 12px; font-weight: 700; font-stretch: 85%; border: 1px solid currentColor; white-space: nowrap; }
+  .tag.good { color: var(--green-ink); background: var(--green-tint); }
+  .tag.warn { color: var(--amber-ink); background: var(--amber-tint); }
+  .tag.bad { color: var(--red-ink); background: var(--red-tint); }
+  .tag.info { color: var(--teal-ink); background: var(--teal-tint); }
+
+  /* The save/spend scale (signature) */
+  .scale { position: relative; min-width: 180px; padding-top: 22px; }
+  .scale .track { position: relative; height: 12px; border: 1.5px solid var(--ink); background: var(--paper); }
+  .scale .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink); z-index: 1; }
+  .scale .fill { position: absolute; inset: 0 auto 0 0; background: var(--teal-tint); transition: width 480ms var(--ease); }
+  .scale .marker { position: absolute; top: 0; transform: translateX(-50%); transition: left 480ms var(--ease); text-align: center; }
+  .scale .marker .val { display: block; font-weight: 800; font-size: 14px; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .scale .marker svg { display: block; margin: 2px auto 0; }
+  .scale .ends { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .scale.lg { padding-top: 12px; margin-top: 10px; }
+  .scale.lg .marker svg { width: 16px; height: 10px; }
+  .scale.lg .track { height: 18px; }
+  .scale.lg .ends { font-size: 12.5px; }
+  @media (prefers-reduced-motion: reduce) { .scale .fill, .scale .marker { transition: none; } }
+
+  /* Overview */
+  .overview-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap); }
+  @media (min-width: 1260px) { .overview-grid { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; } }
+  .rec-link { margin: 10px 0 0; }
+  .pick-line { font-size: 22px; font-weight: 800; font-stretch: 78%; line-height: 1.15; margin: 0 0 6px; }
+  .stage { display: flex; gap: 0; margin-top: 4px; }
+  .stage span { flex: 1; height: 6px; background: var(--hair); margin-right: 3px; }
+  .stage span.on { background: var(--teal); }
+  .cmp { table-layout: fixed; }
+  .cmp td { vertical-align: middle; }
+  .cmp .c-car { width: 21%; } .cmp .c-otd { width: 17%; } .cmp .c-pay { width: 11%; } .cmp .c-mpg { width: 10%; } .cmp .c-fuel { width: 10%; } .cmp .c-war { width: 13%; }
+  .cmp .scale-cell { min-width: 0; }
+  .cmp td.num .tag { margin-top: 4px; }
+  .cmp tbody tr + tr .scale .ends { display: none; }
+  .delta { display: block; margin-top: 2px; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .delta.best { color: var(--teal-ink); }
+  .est { margin-left: 4px; font-size: 11px; font-weight: 700; font-stretch: 85%; letter-spacing: 0.02em; color: var(--amber-ink); white-space: nowrap; }
+  .noscript-body, .load-error { max-width: 72ch; margin: 24px 0; padding: 16px 18px; background: var(--paper); border: 2px solid var(--ink); }
+  .noscript-body h2 { font-size: 17px; margin: 18px 0 6px; }
+
+  /* Inputs */
+  .inputs { display: grid; gap: 12px; }
+  .field label { display: block; font-size: 11.5px; font-weight: 700; font-stretch: 75%; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 3px; }
+  .field input {
+    width: 100%; font: inherit; font-weight: 600; font-variant-numeric: tabular-nums; padding: 7px 9px;
+    border: 1.5px solid var(--ink); border-radius: 0; background: var(--paper); color: var(--ink);
+  }
+  .field input:hover { border-color: var(--teal); }
+  .field input:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+  .field .hint { font-size: 12px; color: var(--muted); margin-top: 2px; min-height: 0; }
+  .field .hint.error { color: var(--red-ink); font-weight: 700; }
+  .field input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+  .field input::-webkit-inner-spin-button, .field input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .field input[aria-invalid="true"] { border-color: var(--red-ink); background: var(--red-tint); }
+  .btn {
+    font: inherit; font-size: 13.5px; font-weight: 700; padding: 7px 12px; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink);
+    cursor: pointer; border-radius: 0;
+  }
+  .btn:hover { background: var(--ink); color: #fff; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; background: var(--paper); color: var(--ink); }
+  .btn.ghost { border-color: transparent; text-decoration: underline; text-underline-offset: 3px; padding-left: 0; padding-right: 0; }
+  .btn.ghost:hover { background: none; color: var(--teal-ink); }
+
+  /* Model sticker */
+  .sticker-top { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  .sticker-top > div { padding: 16px 18px; }
+  .sticker-top > div + div { border-left: 2px solid var(--ink); }
+  .big { font-size: 46px; line-height: 1; font-weight: 800; font-stretch: 72%; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .big-label { font-size: 12px; font-weight: 700; font-stretch: 75%; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+  .verdict { margin: 10px 0 0; font-weight: 600; }
+  .verdict strong { color: var(--teal-ink); }
+  .mpg { display: flex; align-items: flex-end; gap: 14px; }
+  .mpg .big { color: var(--teal-ink); }
+  .mpg dl { display: grid; grid-template-columns: auto auto; gap: 0 10px; margin: 0 0 4px; font-size: 13px; }
+  .mpg dt { color: var(--muted); }
+  .mpg dd { margin: 0; font-weight: 700; text-align: right; }
+  .band { background: var(--teal); color: #fff; padding: 8px 18px; display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; align-items: baseline; }
+  .band-link { color: #fff; text-decoration-color: rgba(255,255,255,0.5); }
+  .band-link:hover { color: #fff; text-decoration-color: #fff; }
+  .band .model-name { font-size: 18px; font-weight: 800; font-stretch: 80%; letter-spacing: 0.01em; }
+  .band .facts { font-size: 13.5px; font-weight: 600; }
+  .spectrum { display: grid; grid-template-columns: repeat(5, 1fr); border: 1.5px solid var(--ink); }
+  .spectrum span { height: 26px; border-left: 1.5px solid var(--ink); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--muted); }
+  .spectrum span:first-child { border-left: 0; }
+  .spectrum span.on { background: var(--ink); color: #fff; }
+  .spectrum-ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  ul.marks { list-style: none; margin: 0; padding: 0; }
+  ul.marks li { position: relative; padding: 5px 0 5px 20px; border-bottom: 1px solid var(--hair); }
+  ul.marks li:last-child { border-bottom: 0; }
+  ul.marks li::before { content: ""; position: absolute; left: 2px; top: 12px; width: 8px; height: 8px; background: var(--ink); }
+  ul.marks.good li::before { background: var(--teal); }
+  ul.marks.warn li::before { background: var(--amber); transform: rotate(45deg); }
+  ul.marks.bad li::before { background: var(--red-ink); }
+
+  /* Checklist */
+  .check { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid var(--hair); cursor: pointer; }
+  .check:last-child { border-bottom: 0; }
+  .check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--teal); flex: none; }
+  .check input:checked + span { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--hair); }
+
+  /* Negotiation */
+  .offer-row { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
+  .offer-row .field { max-width: 260px; }
+  .offer-out { display: grid; grid-template-columns: repeat(3, 1fr); border: 1.5px solid var(--ink); }
+  .offer-out div { padding: 8px 12px; border-left: 1px solid var(--ink); }
+  .offer-out div:first-child { border-left: 0; }
+  .offer-out dt { font-size: 11.5px; font-weight: 700; font-stretch: 75%; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+  .offer-out dd { margin: 0; font-size: 18px; font-weight: 800; font-stretch: 85%; }
+  .script { border: 1.5px solid var(--ink); padding: 12px 14px; background: var(--ground); max-width: 70ch; }
+  .script p { margin: 0 0 8px; }
+  .script-actions { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
+  .status { font-size: 13px; color: var(--green-ink); font-weight: 700; min-height: 1em; }
+
+  .phone-only { display: none; }
+  .empty { padding: 18px; color: var(--muted); }
+  footer.note { margin-top: 28px; color: var(--muted); font-size: 12.5px; max-width: 80ch; }
+
+  /* Mid widths */
+  @media (max-width: 1100px) {
+    .sticker-top { grid-template-columns: 1fr; }
+    .sticker-top > div + div { border-left: 0; border-top: 2px solid var(--ink); }
+  }
+
+  /* Phones and small tablets */
+  @media (max-width: 860px) {
+    html { scroll-padding-top: 110px; }
+    .layout { display: block; background: none; }
+    .rail { display: none; }
+    .tabs { display: block; position: sticky; top: 54px; z-index: 15; background: var(--paper); border-bottom: 2px solid var(--ink); }
+    .tabs .row { display: flex; overflow-x: auto; scrollbar-width: none; }
+    .tabs .row::-webkit-scrollbar { display: none; }
+    .tabs a { flex: none; padding: 11px 13px 10px; color: var(--ink-2); text-decoration: none; font-weight: 600; font-size: 14px; border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+    .tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--teal); font-weight: 800; }
+    main { padding: 18px 14px 40px; }
+    .view-title { font-size: 26px; }
+    .shell { padding: 0 14px; gap: 10px; }
+    .shell .updated, .shell .divider { display: none; }
+    .split { grid-template-columns: 1fr; }
+    .split > .sec + .sec, .split > .col { border-left: 0; }
+    .offer-row { grid-template-columns: 1fr; }
+    .offer-out { grid-template-columns: 1fr; }
+    table.levers td { display: block; width: auto !important; border-bottom: 0; padding: 0 14px; }
+    table.levers td:first-child { padding-top: 10px; }
+    table.levers td:last-child { padding-bottom: 10px; border-bottom: 1px solid var(--hair); }
+    .offer-out div { border-left: 0; border-top: 1px solid var(--ink); display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    .offer-out div:first-child { border-top: 0; }
+    .offer-out dd { font-size: 16px; }
+    .big { font-size: 40px; }
+    .body { padding: 14px; }
+    /* Comparison and listings tables become stacked rows */
+    table.stack thead { display: none; }
+    table.stack, table.stack tbody, table.stack tr, table.stack td { display: block; width: 100%; }
+    table.stack tr { padding: 12px 14px; border-bottom: 1.5px solid var(--ink); }
+    table.stack tbody tr:last-child { border-bottom: 0; }
+    table.stack td { border: 0; padding: 3px 0; text-align: left; display: flex; justify-content: space-between; gap: 12px; }
+    table.stack td::before { content: attr(data-label); font-size: 11.5px; font-weight: 700; font-stretch: 75%; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+    table.stack td .v { text-align: right; }
+    table.stack td.name-cell, table.stack td.scale-cell { display: block; }
+    table.stack td.name-cell::before { content: none; }
+    table.stack td.scale-cell::before { display: block; }
+    .sec-head .aside { display: none; }
+    .cells { grid-template-columns: 1fr 1fr; }
+    .cell { padding: 8px 12px 9px; }
+    .cell.opt, .rec-text, .ov-title { display: none; }
+    .phone-only { display: block; border-top: 2px solid var(--ink); }
+    .phone-only .cell:first-child { grid-column: 1 / -1; }
+    .stage-cell { grid-column: 1 / -1; }
+    .rec-body { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 14px; }
+    .rec-link { margin: 0; font-size: 14px; white-space: nowrap; }
+    .pick-line { font-size: 19px; margin: 0; }
+    table.stack td .v br { display: none; }
+    table.stack td .v .tag, table.stack td .v .muted { margin-left: 6px; }
+    table.stack tr { padding: 10px 14px; }
+    table.stack td { padding: 2px 0; }
+    .sample-banner { padding: 6px 14px; }
+    table.stack td.name-cell { margin-bottom: 4px; font-size: 16px; }
+    table.stack td.scale-cell { padding-top: 6px; min-width: 0; }
+  }
+  @media print {
+    .rail, .tabs { display: none; }
+    .layout { display: block; }
+    .view { display: block !important; break-after: page; }
+    .shell { position: static; }
+  }
+</style>
+</head>
+<body>
+<header class="shell">
+  <span class="brand">
+    <svg width="20" height="24" viewBox="0 0 20 24" aria-hidden="true"><rect x="1" y="1" width="18" height="22" fill="none" stroke="#fff" stroke-width="1.6"/><rect x="1" y="1" width="18" height="5" fill="#fff"/><path d="M4 10h12M4 13.5h12M4 17h7" stroke="#fff" stroke-width="1.4"/></svg>
+    Auto Advisor
+  </span>
+  <span class="divider" aria-hidden="true"></span>
+  <h1 id="title"></h1>
+  <span class="updated" id="updated"></span>
+</header>
+<div class="sample-banner" id="sample-banner" hidden>Sample report. Every car, price, rating and dealer on this page is made up.</div>
+<nav class="tabs" aria-label="Report sections"><div class="row" id="tabs"></div></nav>
+<div class="layout">
+  <nav class="rail" aria-label="Report sections" id="rail"></nav>
+  <main id="main"><noscript><!--__NOSCRIPT__--></noscript></main>
+</div>
+
+<script type="application/json" id="report-data">/*__DATA__*/</script>
+<script>
+(function () {
+  "use strict";
+  /* Any error while drawing the page shows a message instead of a blank sheet. */
+  function fail(err) {
+    var box = document.getElementById("main");
+    if (!box) return;
+    var msg = String((err && err.message) || err || "").replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; });
+    box.innerHTML = '<div class="load-error"><p style="margin:0 0 8px"><strong>This report couldn\'t load.</strong> Ask Claude to rebuild it from the data file.</p>' +
+      '<p class="small muted" style="margin:0">Error: ' + msg + "</p></div>";
+  }
+  try {
+  var D = JSON.parse(document.getElementById("report-data").textContent);
+  var A = D.assumptions, F = D.financing || {}, B = (D.buyer && D.buyer.budget) || {};
+  var offers = {};
+  var byId = {};
+  D.models.forEach(function (m) { byId[m.id] = m; });
+
+  /* ---------- helpers ---------- */
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function url(u) { return /^https?:\/\//i.test(u || "") ? esc(u) : "#"; }
+  function link(t, u) { return u ? '<a href="' + url(u) + '" target="_blank" rel="noopener">' + esc(t) + "</a>" : esc(t); }
+  function money(n) { if (n == null || isNaN(n)) return "–"; var r = Math.round(Math.abs(n)); return (n < 0 && r > 0 ? "−$" : "$") + r.toLocaleString("en-US"); }
+  /* Estimates show to the nearest $100, so they don't read as exact. */
+  function r100(n) { return Math.round(n / 100) * 100; }
+  function approx(n) { return money(r100(n)); }
+  function paras(list) { return (list || []).map(function (p) { return "<p>" + esc(p) + "</p>"; }).join(""); }
+  function marks(list, kind) {
+    if (!list || !list.length) return '<p class="muted" style="margin:0">None noted.</p>';
+    return '<ul class="marks ' + (kind || "") + '">' + list.map(function (i) { return "<li>" + esc(i) + "</li>"; }).join("") + "</ul>";
+  }
+  function sources(list) {
+    if (!list || !list.length) return "";
+    return '<ul class="marks small">' + list.map(function (s) {
+      return "<li>" + link(s.title, s.url) + (s.checked ? ' <span class="muted">· checked ' + esc(s.checked) + "</span>" : "") + "</li>";
+    }).join("") + "</ul>";
+  }
+  function gradeShort(g) { return { regular: "Regular", premium: "Premium", "premium-recommended": "Premium, recommended", electric: "Electric" }[g] || g; }
+  function grade(g) { return { regular: "Regular 87", premium: "Premium required", "premium-recommended": "Premium recommended (91), runs on 87", electric: "Electric" }[g] || g; }
+  /* Share of miles driven on electricity: 1 for an EV, electricShare for a plug-in hybrid, 0 otherwise. */
+  function elecShare(m) { return m.fuelGrade === "electric" ? 1 : (m.electricShare || 0); }
+  function isPlugIn(m) { return m.fuelGrade !== "electric" && elecShare(m) > 0; }
+  function fuelKind(m) { var s = elecShare(m); return s >= 1 ? "Charging" : s > 0 ? "Fuel and charging" : "Fuel"; }
+  function effShort(m) {
+    if (m.fuelGrade === "electric") return m.kwhPer100 + '<br><span class="muted small">kWh/100 mi</span>';
+    return m.mpg.combined + '<br><span class="muted small">' + esc(gradeShort(m.fuelGrade) + (isPlugIn(m) ? ", plug-in" : "")) + "</span>";
+  }
+  function sec(title, inner, aside) {
+    return '<section class="sec"><header class="sec-head"><h2>' + esc(title) + "</h2>" + (aside ? '<span class="aside">' + esc(aside) + "</span>" : "") + "</header>" + inner + "</section>";
+  }
+  function bind(key, cls) { return '<span data-bind="' + key + '"' + (cls ? ' class="' + cls + '"' : "") + "></span>"; }
+  var STAGES = [["needs", "Needs"], ["shortlist", "Shortlist"], ["listings", "Listings"], ["negotiate", "Negotiate"], ["first-year", "First year"]];
+
+  /* ---------- math ---------- */
+  function priceOf(m) { return offers[m.id] != null ? offers[m.id] : m.price; }
+  function calcAt(m, price) {
+    var tax = (price + A.docFee) * A.taxRate;
+    var otd = price + A.docFee + tax + A.title + A.plates;
+    var share = elecShare(m);
+    var ppg = m.fuelGrade === "electric" ? null : (m.fuelGrade === "regular" ? A.regular : A.premium);
+    var gasYear = share < 1 ? A.milesPerYear * (1 - share) / m.mpg.combined * ppg : 0;
+    var elecYear = share > 0 ? A.milesPerYear * share * m.kwhPer100 / 100 * A.electricity : 0;
+    var fuelYear = gasYear + elecYear;
+    var fuel = fuelYear * A.years;
+    var reg = A.registrationPerYear * (A.years - 1) + (m.extraRegistrationPerYear || 0) * A.years;
+    var resale = m.resaleFairValue5yr * (1 - A.privateSaleDiscount);
+    var ins = m.insurance5yr || 0, ptax = m.propertyTax5yr || 0;
+    var total = otd + fuel + ins + m.maintenance5yr + m.repairs5yr + reg + ptax - resale;
+    var payment = null, interest = null, interestInTotal = null;
+    if (F.apr != null && F.apr !== "" && F.months) {
+      var p = Math.max(0, otd - (F.down || 0)), r = F.apr / 100 / 12, n = F.months;
+      payment = r === 0 ? p / n : p * r / (1 - Math.pow(1 + r, -n));
+      interest = payment * n - p;
+      /* The total counts the interest paid inside the cost window: all of it on a loan that ends in time, the first years of it on a longer one. */
+      var k = Math.min(n, A.years * 12), g = Math.pow(1 + r, k);
+      var balance = r === 0 ? p - payment * k : p * g - payment * (g - 1) / r;
+      interestInTotal = payment * k - (p - balance);
+      total += interestInTotal;
+    }
+    return { ins: ins, ptax: ptax, price: price, tax: tax, otd: otd, ppg: ppg, share: share, fuelYear: fuelYear, fuel: fuel, reg: reg, resale: resale, total: total, payment: payment, interest: interest, interestInTotal: interestInTotal };
+  }
+  function calc(m) { return calcAt(m, priceOf(m)); }
+  function maxAsk() { return B.type === "cash" && B.otd && B.amount ? (B.amount - A.title - A.plates) / (1 + A.taxRate) - A.docFee : null; }
+
+  var INCOME = (D.buyer && D.buyer.grossMonthlyIncome) || null;
+  var LOCALE_EST = A.localeBasis !== "verified";
+  var HAS_INS = D.models.some(function (m) { return m.insurance5yr != null; });
+  var HAS_PTAX = D.models.some(function (m) { return m.propertyTax5yr != null; });
+  var HAS_ELEC = D.models.some(function (m) { return elecShare(m) > 0; });
+  /* A financed buyer always gets the payment column, even before there's a loan rate. */
+  var SHOW_PAY = B.type === "financed" || (F.apr != null && F.apr !== "");
+  /* The out-the-door price carries an "est." mark while taxes and fees are a state estimate. */
+  var EST = LOCALE_EST ? '<span class="est">est.</span>' : "";
+
+  /* ---------- sections ---------- */
+  var nav = [{ group: "Decide", items: [{ id: "overview", label: "Overview" }] }];
+  if (D.recommendation) nav[0].items.push({ id: "recommendation", label: "Recommendation" });
+  nav.push({ group: "Cars", items: D.models.map(function (m) { return { id: "car-" + m.id, label: m.name, model: m.id }; }) });
+  var buy = [];
+  if (D.constraint) buy.push({ id: "constraint", label: D.constraint.name });
+  if (D.listings && D.listings.length) buy.push({ id: "listings", label: "Listings" });
+  if (D.negotiation) buy.push({ id: "negotiate", label: "Negotiate" });
+  if (buy.length) nav.push({ group: "Buy", items: buy });
+  if (D.firstYear) nav.push({ group: "Own", items: [{ id: "first-year", label: "First year" }] });
+  var flat = [];
+  nav.forEach(function (g) { g.items.forEach(function (i) { flat.push(i); }); });
+
+  var TICKS = "";
+  for (var t = 1; t < 10; t++) TICKS += '<span class="tick" style="left:' + t * 10 + '%"></span>';
+  function scaleHtml(id, lg) {
+    return '<div class="scale' + (lg ? " lg" : "") + '" data-scale="' + esc(id) + '">' +
+      '<div class="marker">' + (lg ? "" : '<span class="val" data-bind="m.' + esc(id) + '.total"></span>') +
+      '<svg width="12" height="7" viewBox="0 0 12 7" aria-hidden="true"><path d="M0 0h12L6 7z" fill="#0a6a76"/></svg></div>' +
+      '<div class="track"><div class="fill"></div>' + TICKS + "</div>" +
+      '<div class="ends"><span data-bind="scale.min"></span><span data-bind="scale.max"></span></div></div>';
+  }
+
+  function overview() {
+    var stageIdx = -1;
+    STAGES.forEach(function (s, i) { if (s[0] === D.stage) stageIdx = i; });
+    var stageCell = stageIdx >= 0
+      ? "<dd>" + esc(STAGES[stageIdx][1]) + ' <span class="muted small" style="font-weight:500">' + (stageIdx + 1) + " of 5</span>" +
+        '<div class="stage" aria-hidden="true">' + STAGES.map(function (s, i) { return '<span class="' + (i <= stageIdx ? "on" : "") + '"></span>'; }).join("") + "</div></dd>"
+      : "<dd>–</dd>";
+    var cells = '<div class="cells-wrap"><dl class="cells" style="margin:0">' +
+      '<div class="cell"><dt>Budget</dt><dd class="num">' + (B.amount ? money(B.amount) + " " + esc(B.type || "") + (B.otd ? ", out the door" : "") : "Not set") + "</dd></div>" +
+      (maxAsk() != null ? '<div class="cell"><dt>Highest asking price that fits</dt><dd class="num">' + bind("maxAsk") + "</dd></div>" : "") +
+      '<div class="cell opt"><dt>Role</dt><dd>' + esc(D.buyer.role) + "</dd></div>" +
+      '<div class="cell opt"><dt>Location</dt><dd>' + esc(D.buyer.location) + "</dd></div>" +
+      '<div class="cell stage-cell"><dt>Stage</dt>' + stageCell + "</div>" +
+      "</dl></div>";
+
+    var rec = "";
+    if (D.recommendation) {
+      var pm = byId[D.recommendation.pick];
+      rec = sec("Recommendation", '<div class="body rec-body"><p class="pick-line">' + esc(pm ? pm.name : D.recommendation.pick) + "</p>" +
+        '<div class="prose rec-text">' + paras((D.recommendation.paragraphs || []).slice(0, 1)) + "</div>" +
+        '<p class="rec-link"><a href="#recommendation">Why this car</a></p></div>');
+    }
+
+    var effLabel = HAS_ELEC ? "Efficiency" : "MPG", fuelLabel = HAS_ELEC ? "Energy / yr" : "Fuel / yr";
+    var head = '<tr><th class="c-car">Car</th><th class="num c-otd">Out the door</th>' + (SHOW_PAY ? '<th class="num c-pay">Payment</th>' : "") +
+      '<th class="num c-mpg">' + effLabel + '</th><th class="num c-fuel">' + fuelLabel + "</th><th>" + A.years + '-year cost, est.</th><th class="c-war">Warranty left</th></tr>';
+    var rows = D.models.map(function (m) {
+      var id = esc(m.id);
+      return '<tr data-model="' + id + '">' +
+        '<td class="name-cell"><a href="#car-' + id + '">' + esc(m.name) + '</a><span class="meta">' + esc([m.year, m.trim, m.condition].filter(Boolean).join(" · ")) + "</span>" + bind("m." + id + ".offerNote") + "</td>" +
+        '<td class="num" data-label="Out the door"><span class="v">' + bind("m." + id + ".otd") + "<br>" + bind("m." + id + ".budgetTag") + "</span></td>" +
+        (SHOW_PAY ? '<td class="num" data-label="Payment"><span class="v">' + bind("m." + id + ".payment") + "</span></td>" : "") +
+        '<td class="num" data-label="' + effLabel + '"><span class="v">' + effShort(m) + "</span></td>" +
+        '<td class="num" data-label="' + (HAS_ELEC ? "Energy per year" : "Fuel per year") + '"><span class="v">' + bind("m." + id + ".fuelYear") + "</span></td>" +
+        '<td class="scale-cell" data-label="' + A.years + '-year cost, est.">' + scaleHtml(m.id) + '<span class="delta" data-bind="m.' + id + '.delta"></span></td>' +
+        '<td data-label="Warranty left"><span class="v">' + esc(m.warrantyRunway || m.warranty || "") + "</span></td></tr>";
+    }).join("");
+    var cmp = sec("Side by side", '<div class="table-wrap"><table class="cmp stack"><thead>' + head + "</thead><tbody>" + rows + "</tbody></table></div>" +
+      '<div class="body small muted" style="border-top:1px solid var(--hair)">' + A.years + "-year cost = out the door + fuel" + (HAS_INS ? " + insurance" : "") + " + maintenance + repairs + registration" + (HAS_PTAX ? " + property tax" : "") + (SHOW_PAY ? " + loan interest (once a loan rate is set)" : "") + " − resale after a private-sale discount. These totals are estimates, shown to the nearest $100." + (LOCALE_EST ? " Taxes and fees are a state-level estimate, so out-the-door prices are marked est." : "") +
+      (HAS_INS ? " Insurance comes from the buyer's quotes." : " Insurance is left out until there are quotes: each $100 a year adds " + money(100 * A.years) + ".") +
+      (INCOME && SHOW_PAY ? " Payments are checked against the 10% guardrail: " + money(INCOME * 0.1) + " a month on this income." : "") + "</div>",
+      "Change the assumptions to update every total");
+
+    var next = D.negotiation && (D.stage === "listings" || D.stage === "negotiate") ? '<p><a href="#negotiate">Open the negotiation plan</a></p>' :
+      (D.firstYear && D.stage === "first-year" ? '<p><a href="#first-year">Open the first-year plan</a></p>' : "");
+    var summary = D.summary && D.summary.length ? sec("Summary", '<div class="body prose">' + paras(D.summary) + next + "</div>") : "";
+    var phoneCells = '<div class="cells-wrap phone-only"><dl class="cells" style="margin:0">' +
+      '<div class="cell"><dt>Role</dt><dd>' + esc(D.buyer.role) + "</dd></div>" +
+      '<div class="cell"><dt>Location</dt><dd>' + esc(D.buyer.location) + "</dd></div>" +
+      ((D.prepared && D.prepared.date) ? '<div class="cell"><dt>Updated</dt><dd>' + esc(D.prepared.date) + "</dd></div>" : "") + "</dl></div>";
+
+    var fields = [
+      ["milesPerYear", "Miles a year", "500", A, ""], ["regular", "Regular, $ per gallon", "0.01", A, ""], ["premium", "Premium, $ per gallon", "0.01", A, ""],
+      ["taxRate", "Sales tax, %", "0.05", A, "", 100], ["privateSaleDiscount", "Private-sale discount, %", "1", A, "Taken off resale value", 100]
+    ];
+    if (HAS_ELEC) fields.push(["electricity", "Electricity, $ per kWh", "0.01", A, "Home and public charging, blended"]);
+    if (B.type === "financed") fields.push(["apr", "Loan rate, APR %", "0.05", F, ""], ["down", "Down payment", "500", F, ""], ["months", "Loan length, months", "12", F, ""]);
+    var inputs = fields.map(function (f) {
+      var v = f[3][f[0]], sc = f[5] || 1;
+      return '<div class="field"><label for="in-' + f[0] + '">' + esc(f[1]) + "</label>" +
+        '<input type="number" inputmode="decimal" step="' + f[2] + '" min="0" id="in-' + f[0] + '" data-key="' + f[0] + '" data-scale-by="' + sc + '" data-obj="' + (f[3] === F ? "F" : "A") + '" aria-describedby="hint-' + f[0] + '" value="' + (v == null ? "" : +(v * sc).toFixed(4)) + '">' +
+        '<div class="hint" id="hint-' + f[0] + '" data-default="' + esc(f[4]) + '">' + esc(f[4]) + "</div></div>";
+    }).join("");
+    var assume = '<div class="sheet">' + sec("Assumptions", '<div class="body">' +
+      (LOCALE_EST ? '<p class="small" style="margin:0 0 12px"><span class="tag warn">Estimate</span> Taxes and fees are a state-level estimate. Local taxes and exact fees aren\'t included.</p>' : '<p class="small" style="margin:0 0 12px"><span class="tag good">Verified</span> Taxes and fees come from the cited local sources.</p>') +
+      '<div class="inputs">' + inputs + "</div>" +
+      '<p class="small muted" style="margin:14px 0 0">Doc fee ' + money(A.docFee) + ", title " + money(A.title) + ", plates " + money(A.plates) + ", registration " + money(A.registrationPerYear) + " a year.</p>" +
+      '<p style="margin:8px 0 0"><button class="btn ghost" type="button" id="reset-assumptions">Reset to the report\'s numbers</button></p></div>') +
+      ((A.notes && A.notes.length) || (A.sources && A.sources.length) ? sec("Notes and sources", '<div class="body small">' + marks(A.notes) + sources(A.sources) + "</div>") : "") + "</div>";
+
+    return '<h2 class="view-title ov-title">' + esc(D.title) + "</h2>" +
+      '<div class="overview-grid"><div><div class="sheet">' + cells + rec + cmp + phoneCells + "</div>" + (summary ? '<div class="sheet">' + summary + "</div>" : "") + "</div>" + assume + "</div>";
+  }
+
+  function effBlock(m, id) {
+    var perYear = bind("m." + id + ".fuelYear") + " a year in " + fuelKind(m).toLowerCase();
+    if (m.fuelGrade === "electric") {
+      return '<div><div class="big-label">Efficiency</div><div class="mpg"><span class="big">' + m.kwhPer100 + "</span></div>" +
+        '<div class="muted small">kWh per 100 miles · ' + perYear + "</div></div>";
+    }
+    var mpg = m.mpg || {};
+    var cityHwy = mpg.city != null && mpg.hwy != null ? "<dl><dt>City</dt><dd>" + mpg.city + "</dd><dt>Highway</dt><dd>" + mpg.hwy + "</dd></dl>" : "";
+    var plug = isPlugIn(m) ? '<div class="muted small">Plug-in: ' + Math.round(elecShare(m) * 100) + "% of miles on electricity at " + m.kwhPer100 + " kWh per 100 miles</div>" : "";
+    return '<div><div class="big-label">Fuel economy</div><div class="mpg"><span class="big">' + mpg.combined + "</span>" + cityHwy + "</div>" +
+      '<div class="muted small">MPG combined · ' + perYear + "</div>" + plug + "</div>";
+  }
+
+  function carView(m) {
+    var id = esc(m.id);
+    var spec = "";
+    for (var i = 1; i <= 5; i++) spec += '<span class="' + (i === m.spectrum ? "on" : "") + '">' + i + "</span>";
+    var top = '<div class="band"><span class="model-name">' + esc([m.year, m.name, m.trim].filter(Boolean).join(" ")) + '</span><span class="facts">' + esc(m.condition || "") + " · " + esc(grade(m.fuelGrade)) + "</span></div>" +
+      '<div class="sticker-top"><div><div class="big-label">' + A.years + '-year cost of ownership, estimated</div><div class="big" data-bind="m.' + id + '.total"></div>' + scaleHtml(m.id, true) +
+      '<p class="verdict" data-bind="m.' + id + '.verdict"></p></div>' + effBlock(m, id) + "</div>" +
+      '<div class="cells-wrap" style="border-top:2px solid var(--ink)"><dl class="cells" style="margin:0">' +
+      '<div class="cell"><dt>Out the door</dt><dd class="num">' + bind("m." + id + ".otd") + " " + bind("m." + id + ".budgetTag") + "</dd></div>" +
+      '<div class="cell"><dt>Asking</dt><dd class="num">' + money(m.price) + bind("m." + id + ".offerNote") + "</dd></div>" +
+      '<div class="cell"><dt>Warranty runway</dt><dd>' + esc(m.warrantyRunway || "–") + "</dd></div>" +
+      '<div class="cell"><dt>Safety</dt><dd>' + esc([(m.safety || {}).nhtsa, (m.safety || {}).iihs].filter(Boolean).join(" · ") || "–") + "</dd></div>" +
+      "</dl></div>";
+
+    var spectrum = '<div class="body"><div class="spectrum" role="img" aria-label="Position ' + m.spectrum + ' of 5, from reliable appliance to premium with a maintenance tax">' + spec + '</div><div class="spectrum-ends"><span>Reliable appliance</span><span>Premium, with a maintenance tax</span></div>' +
+      (m.spectrumNote ? '<p style="margin:10px 0 0">' + esc(m.spectrumNote) + "</p>" : "") + "</div>";
+
+    var moneyRows = [
+      ["Price", "m." + id + ".price", m.priceNote], ["Doc fee", null, null, A.docFee], ["Sales tax", "m." + id + ".tax", (A.taxRate * 100).toFixed(2) + "% of price and doc fee" + (LOCALE_EST ? ", state estimate" : "")],
+      ["Title and plates", null, null, A.title + A.plates], ["Out the door", "m." + id + ".otd", null, null, true],
+      [fuelKind(m) + ", " + A.years + " years", "m." + id + ".fuel", "m." + id + ".fuelNote"], ["Maintenance, " + A.years + " years", null, null, m.maintenance5yr],
+      ["Repairs, " + A.years + " years", null, m.repairsNote, m.repairs5yr],
+      ["Registration renewals", "m." + id + ".reg", m.extraRegistrationPerYear ? "Includes a " + money(m.extraRegistrationPerYear) + " yearly road-use fee" : null]].concat(
+      m.insurance5yr != null ? [["Insurance, " + A.years + " years", null, m.insuranceNote || "From the buyer's quotes", m.insurance5yr]] : []).concat(
+      m.propertyTax5yr != null ? [["Property tax, " + A.years + " years", null, m.propertyTaxNote, m.propertyTax5yr]] : []).concat(
+      SHOW_PAY ? [["Loan interest, " + A.years + " years", "m." + id + ".loanInterest", "m." + id + ".loanInterestNote"]] : []).concat([
+      ["Resale at year " + A.years, "m." + id + ".resale", m.resaleNote], [A.years + "-year cost, estimated", "m." + id + ".totalExact", null, null, true]
+    ]).map(function (r) {
+      var note = r[2] ? (/^m\./.test(r[2]) ? '<span class="muted small" style="display:block" data-bind="' + r[2] + '"></span>' : '<span class="muted small" style="display:block">' + esc(r[2]) + "</span>") : "";
+      var val = r[1] ? bind(r[1]) : money(r[3]);
+      return "<tr" + (r[4] ? ' class="total"' : "") + "><td>" + esc(r[0]) + note + '</td><td class="num">' + val + "</td></tr>";
+    }).join("");
+    if (SHOW_PAY) moneyRows += '<tr><td>Loan payment<span class="muted small" style="display:block" data-bind="m.' + id + '.loanNote"></span></td><td class="num">' + bind("m." + id + ".payment") + "</td></tr>";
+
+    var fm = (m.failureModes || []).map(function (f) {
+      return '<tr><td class="name-cell"><strong>' + esc(f.item) + '</strong><span class="meta">' + esc(f.why) + '</span></td><td class="num" data-label="Cost"><span class="v">' + esc(f.cost) + '</span></td><td data-label="On this car"><span class="v">' + esc(f.status || "") + "</span></td></tr>";
+    }).join("");
+    var rv = (m.reviews || []).map(function (r) {
+      return "<li>" + link(r.title, r.url) + ' <span class="muted small">' + esc(r.source || "") + "</span><br>" + esc(r.summary || "") + "</li>";
+    }).join("");
+
+    return '<h2 class="view-title">' + esc(m.name) + "</h2>" +
+      '<div class="sheet">' + '<section class="sec">' + top + "</section>" +
+      sec("Where it sits", spectrum) +
+      sec("The story", '<div class="body prose">' + paras(m.story) + "</div>") +
+      '<div class="split">' + sec("Strengths", '<div class="body">' + marks(m.strengths, "good") + "</div>") + sec("Watch-outs", '<div class="body">' + marks(m.watchouts, "warn") + "</div>") + "</div>" +
+      sec("Known failure modes", fm ? '<div class="table-wrap"><table class="stack"><thead><tr><th>Item and why it happens</th><th class="num">Cost</th><th>On this car</th></tr></thead><tbody>' + fm + "</tbody></table></div>" : '<p class="empty">None known.</p>') +
+      '<div class="split">' + sec("The money", '<div class="table-wrap"><table><tbody>' + moneyRows + "</tbody></table></div>") +
+      '<div class="col">' + sec("Inspection checklist", '<div class="body">' + marks(m.inspection) + "</div>") + sec("Walk away if", '<div class="body">' + marks(m.walkAway, "bad") + "</div>") + "</div></div>" +
+      sec("Reviews and sources", '<div class="body">' + (rv ? '<ul class="marks" style="margin-bottom:12px">' + rv + "</ul>" : "") + sources(m.sources) + "</div>") +
+      "</div>";
+  }
+
+  function constraintView() {
+    var C = D.constraint;
+    var head = "<tr><th>Car</th>" + C.columns.map(function (c) { return "<th>" + esc(c) + "</th>"; }).join("") + "</tr>";
+    var rows = D.models.map(function (m) {
+      return '<tr><td class="name-cell"><a href="#car-' + esc(m.id) + '">' + esc(m.name) + "</a></td>" + (m.constraint || []).map(function (v, i) { return '<td data-label="' + esc(C.columns[i]) + '">' + esc(v) + "</td>"; }).join("") + "</tr>";
+    }).join("");
+    return '<h2 class="view-title">' + esc(C.name) + "</h2>" + '<div class="sheet">' +
+      sec("Why it decides", '<div class="body prose">' + paras([C.intro]) + "</div>") +
+      sec("By car", '<div class="table-wrap"><table class="stack"><thead>' + head + "</thead><tbody>" + rows + "</tbody></table></div>") + "</div>";
+  }
+
+  function listingsView() {
+    var targets = {};
+    ((D.negotiation || {}).cars || []).forEach(function (c) { targets[c.model] = c.target; });
+    var rows = D.listings.map(function (l) {
+      var m = byId[l.model], t = targets[l.model];
+      var vs = t != null ? (l.price <= t ? '<span class="tag good">At or under target</span>' : '<span class="tag warn">' + money(l.price - t) + " over target</span>") : "";
+      return '<tr><td class="name-cell"><a href="#car-' + esc(l.model) + '">' + esc(m ? m.name : l.model) + '</a><span class="meta">' + link(l.dealer, l.url) + "</span></td>" +
+        '<td class="num" data-label="Asking">' + money(l.price) + (vs ? "<br>" + vs : "") + "</td>" +
+        '<td class="num" data-label="Miles">' + (l.miles != null ? Number(l.miles).toLocaleString("en-US") : "–") + "</td>" +
+        '<td data-label="Pricing">' + esc(l.pricing || "") + "</td>" +
+        '<td data-label="Notes">' + esc(l.notes || "") + (l.checked ? '<span class="muted small" style="display:block">Checked ' + esc(l.checked) + "</span>" : "") + "</td></tr>";
+    }).join("");
+    return '<h2 class="view-title">Listings</h2><div class="sheet">' +
+      sec("Live cars", '<div class="table-wrap"><table class="stack"><thead><tr><th>Car and dealer</th><th class="num">Asking</th><th class="num">Miles</th><th>Pricing</th><th>Notes</th></tr></thead><tbody>' + rows + "</tbody></table></div>") +
+      sec("How pricing works", '<div class="body prose small">One-price stores don\'t negotiate on price. There, the levers are the inspection, the return window, fixes before delivery and the trade-in.</div>') + "</div>";
+  }
+
+  function negotiateView() {
+    var N = D.negotiation;
+    var cars = (N.cars || []).map(function (c) {
+      var m = byId[c.model]; if (!m) return "";
+      var id = esc(m.id);
+      var ladder = [["Opening offer", c.opening], ["Target", c.target], ["Walk-away", c.walkAway], ["Asking", m.price]].map(function (r, i) {
+        return "<tr><td>" + r[0] + '</td><td class="num">' + money(r[1]) + '</td><td class="num" data-bind="n.' + id + "." + i + '"></td></tr>';
+      }).join("");
+      var levers = (c.levers || []).map(function (l) { return "<tr><td><strong>" + esc(l.lever) + "</strong></td><td>" + esc(l.evidence) + "</td></tr>"; }).join("");
+      return '<div class="sheet">' +
+        '<section class="sec"><div class="band"><span class="model-name">' + esc(m.name) + '</span><span class="facts">Asking ' + money(m.price) + "</span></div></section>" +
+        '<div class="split">' + sec("Price ladder", '<div class="table-wrap"><table><thead><tr><th>Step</th><th class="num">Price</th><th class="num">Out the door</th></tr></thead><tbody>' + ladder + "</tbody></table></div>") +
+        sec("Try an offer", '<div class="body"><div class="offer-row"><div class="field"><label for="offer-' + id + '">Your offer price</label>' +
+          '<input type="number" inputmode="numeric" step="100" min="0" id="offer-' + id + '" data-offer="' + id + '" aria-describedby="hint-offer-' + id + '">' +
+          '<div class="hint" id="hint-offer-' + id + '" data-default="Updates this car everywhere in the report.">Updates this car everywhere in the report.</div>' +
+          '<button class="btn ghost" type="button" data-clear-offer="' + id + '">Clear offer</button></div>' +
+          '<dl class="offer-out" style="margin:0"><div><dt>Out the door</dt><dd data-bind="m.' + id + '.otd"></dd></div>' +
+          "<div><dt>" + A.years + '-year cost</dt><dd data-bind="m.' + id + '.total"></dd></div>' +
+          '<div><dt>Against walk-away</dt><dd data-bind="n.' + id + '.walk"></dd></div></dl></div></div>') + "</div>" +
+        sec("Levers", levers ? '<div class="table-wrap"><table class="levers"><tbody>' + levers + "</tbody></table></div>" : '<p class="empty">None listed.</p>') +
+        sec("First message", '<div class="body"><div class="script" id="script-' + id + '">' + paras(c.script) + '</div><div class="script-actions"><button class="btn" type="button" data-copy="script-' + id + '">Copy message</button><span class="status" role="status" aria-live="polite"></span></div></div>') +
+        "</div>";
+    }).join("");
+    return '<h2 class="view-title">Negotiate</h2>' + (N.intro ? '<p class="view-sub prose">' + esc(N.intro) + "</p>" : "") + cars;
+  }
+
+  function firstYearView() {
+    var Y = D.firstYear, m = byId[Y.model];
+    var key = "aa-first30-" + (D.title || "");
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(key) || "{}"); } catch (e) { saved = {}; }
+    var first30 = (Y.first30 || []).map(function (t, i) {
+      return '<label class="check"><input type="checkbox" data-first30="' + i + '"' + (saved[i] ? " checked" : "") + "><span>" + esc(t) + "</span></label>";
+    }).join("");
+    var lo = 0, hi = 0;
+    var rows = (Y.schedule || []).map(function (r) {
+      lo += r.low || 0; hi += r.high || 0;
+      return '<tr><td data-label="When"><strong>' + esc(r.when) + '</strong></td><td class="name-cell">' + esc(r.task) + '<span class="meta">' + esc(r.why || "") + "</span></td>" +
+        '<td data-label="Who">' + esc(r.who || "") + '</td><td class="num" data-label="Cost">' + esc(r.cost || "") + "</td></tr>";
+    }).join("");
+    rows += '<tr class="total"><td colspan="3">First-year total</td><td class="num">' + money(lo) + " to " + money(hi) + "</td></tr>";
+    return '<h2 class="view-title">First year</h2>' + '<p class="view-sub">' + esc(m ? m.name : Y.model) + "</p>" + '<div class="sheet">' +
+      (Y.intro ? sec("About this plan", '<div class="body prose">' + esc(Y.intro) + "</div>") : "") +
+      sec("First 30 days", '<div class="body">' + first30 + "</div>", "Ticks stay in this browser") +
+      sec("First 12 months", '<div class="table-wrap"><table class="stack"><thead><tr><th>When</th><th>Task</th><th>Who</th><th class="num">Cost</th></tr></thead><tbody>' + rows + "</tbody></table></div>") +
+      (Y.sources && Y.sources.length ? sec("Sources", '<div class="body">' + sources(Y.sources) + "</div>") : "") + "</div>";
+  }
+
+  function recommendationView() {
+    var R = D.recommendation, m = byId[R.pick];
+    return '<h2 class="view-title">Recommendation</h2><div class="sheet">' +
+      '<section class="sec"><div class="band"><a class="model-name band-link" href="#car-' + esc(R.pick) + '">' + esc(m ? [m.year, m.name, m.trim].filter(Boolean).join(" ") : R.pick) + '</a><span class="facts">' + bind("m." + esc(R.pick) + ".total") + " over " + A.years + " years</span></div></section>" +
+      sec("Why", '<div class="body prose">' + paras(R.paragraphs) + "</div>") +
+      (R.avoid && R.avoid.length ? sec("What to skip", '<div class="body">' + marks(R.avoid, "bad") + "</div>") : "") +
+      (D.negotiation ? sec("Next", '<div class="body"><a href="#negotiate">Go to the negotiation plan for the ' + esc(m ? m.name : R.pick) + "</a></div>") : "") +
+      "</div>";
+  }
+
+  /* ---------- render once ---------- */
+  if (D.sample) document.getElementById("sample-banner").hidden = false;
+  document.title = D.title + " · Auto Advisor";
+  document.getElementById("title").textContent = D.title;
+  document.getElementById("updated").textContent = (D.prepared && D.prepared.date) ? "Updated " + D.prepared.date : "";
+
+  document.getElementById("rail").innerHTML = nav.map(function (g) {
+    return '<div class="group"' + (g.group === "Cars" ? ' id="rail-cars"' : "") + '><div class="group-label">' + esc(g.group) + "</div>" + g.items.map(function (i) {
+      return '<a href="#' + esc(i.id) + '" data-nav="' + esc(i.id) + '"><span>' + esc(i.label) + "</span>" + (i.model ? '<span class="figure" data-bind="m.' + esc(i.model) + '.totalShort"></span>' : "") + "</a>";
+    }).join("") + "</div>";
+  }).join("");
+  document.getElementById("tabs").innerHTML = flat.map(function (i) {
+    return '<a href="#' + esc(i.id) + '" data-nav="' + esc(i.id) + '">' + esc(i.label) + "</a>";
+  }).join("");
+
+  function view(id, inner) { return '<section class="view" id="' + esc(id) + '" tabindex="-1">' + inner + "</section>"; }
+  var html = view("overview", overview());
+  if (D.recommendation) html += view("recommendation", recommendationView());
+  D.models.forEach(function (m) { html += view("car-" + m.id, carView(m)); });
+  if (D.constraint) html += view("constraint", constraintView());
+  if (D.listings && D.listings.length) html += view("listings", listingsView());
+  if (D.negotiation) html += view("negotiate", negotiateView());
+  if (D.firstYear) html += view("first-year", firstYearView());
+  html += '<footer class="note">Figures are estimates from the cited sources on the dates shown. Verify prices, fees and warranty terms before you sign.</footer>';
+  var main = document.getElementById("main");
+  main.innerHTML = html;
+
+  /* ---------- update in place ---------- */
+  function update() {
+    var v = {}, cls = {};
+    var results = D.models.map(function (m) { return { m: m, c: calc(m) }; });
+    var totals = results.map(function (r) { return r.c.total; });
+    var min = Math.min.apply(null, totals), max = Math.max.apply(null, totals);
+    /* Cars within $100 of the cheapest count as tied: the totals are estimates. */
+    var tiedLow = results.filter(function (r) { return r100(r.c.total - min) === 0; });
+    v["scale.min"] = approx(min) + " cheapest";
+    v["scale.max"] = approx(max) + " priciest";
+    var ma = maxAsk();
+    v.maxAsk = ma == null ? "–" : (LOCALE_EST ? "About " : "") + money(Math.floor(ma / 100) * 100);
+    results.forEach(function (r) {
+      var m = r.m, c = r.c, k = "m." + m.id + ".";
+      v[k + "price"] = money(c.price); v[k + "tax"] = money(c.tax); v[k + "otd"] = money(c.otd) + EST;
+      v[k + "fuel"] = money(c.fuel); v[k + "fuelYear"] = money(c.fuelYear); v[k + "reg"] = money(c.reg);
+      v[k + "resale"] = money(-c.resale); v[k + "total"] = approx(c.total); v[k + "totalExact"] = money(c.total);
+      v[k + "totalShort"] = "$" + (c.total / 1000).toFixed(1) + "k";
+      var miles = A.milesPerYear.toLocaleString("en-US");
+      var gasNote = miles + " mi a year" + (c.share > 0 ? " × " + Math.round((1 - c.share) * 100) + "%" : "") + " ÷ " + (m.mpg || {}).combined + " MPG × $" + Number(c.ppg).toFixed(2);
+      var elecNote = miles + " mi a year" + (c.share < 1 ? " × " + Math.round(c.share * 100) + "%" : "") + " × " + m.kwhPer100 + " kWh/100 mi × $" + Number(A.electricity).toFixed(2);
+      v[k + "fuelNote"] = c.share >= 1 ? elecNote : c.share > 0 ? gasNote + ", plus " + elecNote : gasNote;
+      v[k + "payment"] = c.payment != null ? money(c.payment) + "/mo" : '<span class="muted small">Add a loan rate</span>';
+      if (c.payment != null && INCOME) {
+        var share = c.payment / INCOME * 100;
+        v[k + "payment"] += share <= 10 ? ' <span class="tag good">' + share.toFixed(1) + "% of income</span>" : ' <span class="tag warn">' + share.toFixed(1) + "% of income, over 10%</span>";
+      }
+      v[k + "loanInterest"] = c.payment != null ? money(c.interestInTotal) : "–";
+      v[k + "loanInterestNote"] = c.payment == null ? "Not in the total yet. Set the loan rate under Assumptions." :
+        F.months > A.years * 12 ? "The first " + A.years + " years of the " + F.months + "-month loan" : "";
+      v[k + "loanNote"] = c.payment != null ? money(F.down || 0) + " down, " + F.months + " months at " + F.apr + "%, " + money(c.interest) + " interest" : "Set the loan rate under Assumptions to see the payment.";
+      v[k + "offerNote"] = offers[m.id] != null ? '<span class="tag info" style="margin-left:6px">At your offer ' + money(offers[m.id]) + "</span>" : "";
+      if (B.amount && B.otd) {
+        var d = B.amount - c.otd;
+        /* Local taxes can add a few percent to a state estimate, so a thin margin isn't a safe "under". */
+        var margin = LOCALE_EST ? 0.03 * c.otd : 0;
+        var amt = function (x) { return LOCALE_EST ? "About " + approx(x) : money(x); };
+        v[k + "budgetTag"] = Math.abs(d) < margin ? '<span class="tag warn">' + (d >= 0 ? "Just under budget" : "Just over budget") + "</span>" :
+          d >= 0 ? '<span class="tag good">' + amt(d) + " under budget</span>" : '<span class="tag bad">' + amt(-d) + " over budget</span>";
+      } else v[k + "budgetTag"] = "";
+      var verdict, tied = tiedLow.indexOf(r) >= 0;
+      if (D.models.length < 2) verdict = "The only car on this shortlist.";
+      else if (tied && tiedLow.length > 1) verdict = "About the same " + A.years + "-year cost as the cheapest car on this shortlist, within $100.";
+      else if (tied) {
+        var next = Math.min.apply(null, results.filter(function (o) { return o !== r; }).map(function (o) { return o.c.total; }));
+        verdict = "About <strong>" + approx(next - c.total) + "</strong> less over " + A.years + " years than the next-cheapest car on this shortlist.";
+      } else verdict = "About <strong>" + approx(c.total - min) + "</strong> more over " + A.years + " years than the cheapest car on this shortlist.";
+      v[k + "verdict"] = verdict;
+      var pos = max === min ? 50 : (c.total - min) / (max - min) * 100;
+      document.querySelectorAll('[data-scale="' + m.id + '"]').forEach(function (s) {
+        var mk = s.querySelector(".marker"), fill = s.querySelector(".fill");
+        mk.style.left = "clamp(28px, " + pos.toFixed(2) + "%, calc(100% - 28px))";
+        fill.style.width = pos.toFixed(2) + "%";
+        s.setAttribute("role", "img");
+        s.setAttribute("aria-label", A.years + "-year cost about " + approx(c.total) + ", on a scale from " + approx(min) + " to " + approx(max));
+      });
+    });
+    var order = results.slice().sort(function (a, b) { return a.c.total - b.c.total; });
+    order.forEach(function (r) {
+      var tied = tiedLow.indexOf(r) >= 0;
+      v["m." + r.m.id + ".delta"] = !tied ? "+" + approx(r.c.total - min) + " vs. the cheapest" :
+        '<span class="delta best">' + (tiedLow.length > 1 ? "Tied for lowest " : "Lowest ") + A.years + "-year cost</span>";
+    });
+    var tbody = document.querySelector(".cmp tbody");
+    if (tbody) order.forEach(function (r) { var tr = tbody.querySelector('tr[data-model="' + r.m.id + '"]'); if (tr) tbody.appendChild(tr); });
+    var railCars = document.getElementById("rail-cars");
+    if (railCars) order.forEach(function (r) { var a = railCars.querySelector('[data-nav="car-' + r.m.id + '"]'); if (a) railCars.appendChild(a); });
+    ((D.negotiation || {}).cars || []).forEach(function (n) {
+      var m = byId[n.model]; if (!m) return;
+      [n.opening, n.target, n.walkAway, m.price].forEach(function (p, i) { v["n." + m.id + "." + i] = money(calcAt(m, p).otd) + EST; });
+      var o = offers[m.id];
+      v["n." + m.id + ".walk"] = o == null ? '<span class="muted">Enter an offer</span>' :
+        (o <= n.walkAway ? '<span class="tag good">' + money(n.walkAway - o) + " under</span>" : '<span class="tag bad">' + money(o - n.walkAway) + " over</span>");
+    });
+    document.querySelectorAll("[data-bind]").forEach(function (el) {
+      var key = el.getAttribute("data-bind");
+      if (key in v) {
+        var val = v[key];
+        if (/<span|<strong/.test(val)) el.innerHTML = val; else el.textContent = val;
+      }
+    });
+  }
+
+  /* ---------- inputs ---------- */
+  function setError(input, msg) {
+    var hint = document.getElementById(input.getAttribute("aria-describedby"));
+    input.setAttribute("aria-invalid", msg ? "true" : "false");
+    if (!hint) return;
+    hint.textContent = msg || hint.getAttribute("data-default") || "";
+    hint.classList.toggle("error", !!msg);
+  }
+  /* A total that fails to compute flags the field that caused it instead of breaking the page. */
+  function safeUpdate(input) {
+    try { update(); } catch (err) { if (input) setError(input, "That value broke a total. Reset to the report's numbers."); }
+  }
+  var original = { A: JSON.parse(JSON.stringify(A)), F: JSON.parse(JSON.stringify(F)) };
+  main.addEventListener("input", function (e) {
+    var t = e.target;
+    if (t.dataset.key) {
+      var obj = t.dataset.obj === "F" ? F : A;
+      var n = parseFloat(t.value), k = t.dataset.key;
+      var msg = "";
+      if (t.value === "" || isNaN(n)) msg = "Enter a number. Totals keep the last valid value.";
+      else if (n < 0) msg = "Enter 0 or more.";
+      else if (k === "milesPerYear" && n === 0) msg = "Miles a year must be above 0.";
+      else if (k === "months" && n === 0) msg = "The loan needs at least 1 month.";
+      setError(t, msg);
+      if (msg) return;
+      obj[k] = n / (parseFloat(t.dataset.scaleBy) || 1); safeUpdate(t);
+    } else if (t.dataset.offer) {
+      var id = t.dataset.offer, val = parseFloat(t.value);
+      if (t.value === "") { delete offers[id]; setError(t, ""); }
+      else if (isNaN(val) || val <= 0) { setError(t, "Enter a price above $0, or clear the offer."); return; }
+      else { offers[id] = val; setError(t, ""); }
+      safeUpdate(t);
+    } else if (t.dataset.first30 != null) {
+      var key = "aa-first30-" + (D.title || ""), saved = {};
+      try { saved = JSON.parse(localStorage.getItem(key) || "{}"); } catch (err) { saved = {}; }
+      saved[t.dataset.first30] = t.checked;
+      try { localStorage.setItem(key, JSON.stringify(saved)); } catch (err) {}
+    }
+  });
+  main.addEventListener("click", function (e) {
+    var t = e.target.closest("button");
+    if (!t) return;
+    if (t.id === "reset-assumptions") {
+      Object.keys(original.A).forEach(function (k) { A[k] = original.A[k]; });
+      Object.keys(original.F).forEach(function (k) { F[k] = original.F[k]; });
+      main.querySelectorAll("input[data-key]").forEach(function (i) { var o = i.dataset.obj === "F" ? F : A, v = o[i.dataset.key]; i.value = v == null ? "" : +(v * (parseFloat(i.dataset.scaleBy) || 1)).toFixed(4); setError(i, ""); });
+      safeUpdate();
+    } else if (t.dataset.clearOffer) {
+      delete offers[t.dataset.clearOffer];
+      var inp = document.getElementById("offer-" + t.dataset.clearOffer); if (inp) { inp.value = ""; setError(inp, ""); }
+      safeUpdate();
+    } else if (t.dataset.copy) {
+      var box = document.getElementById(t.dataset.copy), status = t.parentNode.querySelector(".status");
+      var text = Array.prototype.map.call(box.querySelectorAll("p"), function (p) { return p.textContent; }).join("\n\n");
+      var done = function (ok) { status.textContent = ok ? "Copied" : "Select the text and copy it"; status.style.color = ok ? "" : "var(--red-ink)"; setTimeout(function () { status.textContent = ""; }, 2500); };
+      try { navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); }); } catch (err) { done(false); }
+    }
+  });
+
+  /* ---------- navigation ---------- */
+  function show(id, scroll) {
+    if (!flat.some(function (i) { return i.id === id; })) id = "overview";
+    document.querySelectorAll(".view").forEach(function (s) { s.classList.toggle("active", s.id === id); });
+    document.querySelectorAll("[data-nav]").forEach(function (a) {
+      if (a.getAttribute("data-nav") === id) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    var tab = document.querySelector('.tabs [data-nav="' + id + '"]');
+    var row = tab && tab.parentNode;
+    if (row && row.scrollWidth > row.clientWidth) row.scrollLeft = tab.offsetLeft - (row.clientWidth - tab.offsetWidth) / 2;
+    if (scroll) { try { window.scrollTo(0, 0); } catch (err) {} }
+  }
+  /* In-page links switch sections in script, so the page also works inside sandboxed previews. */
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    var id = a.getAttribute("href").slice(1);
+    show(id, true);
+    try { history.replaceState(null, "", "#" + id); } catch (err) {}
+  });
+  window.addEventListener("hashchange", function () { try { show(location.hash.slice(1), true); } catch (err) {} });
+  try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch (err) {}
+
+  update();
+  var startId = "overview";
+  try { startId = (location.hash || "#overview").slice(1); } catch (err) {}
+  show(startId, true);
+  window.addEventListener("load", function () { window.scrollTo(0, 0); });
+  } catch (err) { fail(err); }
+})();
+</script>
+</body>
+</html>

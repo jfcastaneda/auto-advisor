@@ -1,0 +1,146 @@
+{
+  "checked": "2026-11-19",
+  "schemaNotes": "Every rate is a fraction, the same unit as the report's assumptions.taxRate (6.25% is 0.0625). combinedLow/combinedHigh is the state rate plus the lowest and highest local add-on found for vehicle sales, as a single fraction each, not a local-only add-on. A null field always means unknown: a confirmed 'none' or 'not applicable' goes in note instead, so null keeps one meaning. This covers a deliberate handful of states for range of coverage, not population. See locale.md for what to do with a state not listed here, and calc.py state --code XX to read one row without loading the whole file.",
+  "states": {
+    "TX": {
+      "name": "Texas",
+      "regime": "sales",
+      "stateRate": 0.0625,
+      "combinedLow": 0.0625,
+      "combinedHigh": 0.0625,
+      "docFeeTaxed": false,
+      "rebateTaxed": false,
+      "docFeeCap": null,
+      "tradeInCredit": "yes",
+      "yearlyValueTax": { "applies": false, "roughRate": null },
+      "privatePartyRule": "Tax is on the greater of the sales price (total consideration) or 80% of the vehicle's standard presumptive value (SPV), unless the buyer presents a certified appraisal (Comptroller Form 14-128) within 30 days (60 for active-duty military) showing a lower value.",
+      "specialLineItems": [],
+      "source": {
+        "title": "Texas Comptroller, Motor Vehicle Tax Guide 96-254: Total Consideration",
+        "url": "https://comptroller.texas.gov/taxes/publications/96-254/total-consideration.php",
+        "checked": "2026-11-19"
+      },
+      "note": "The 6.25% rate is flat statewide, with no local add-on for the motor vehicle sales tax itself (unlike Texas's general sales tax, which does have local add-ons). A separately stated documentary fee has been excluded from the taxable total consideration since 1971, per Comptroller guidance, so docFeeTaxed is false. Separately stated manufacturer rebates are excluded too. A trade-in's value does reduce the taxable amount on a dealer sale. A dealer's special inventory tax is a property tax the dealer owes the county on past sales. It's not a line item on the buyer's invoice, so it doesn't belong in the buyer's OTD price."
+    },
+    "CA": {
+      "name": "California",
+      "regime": "sales",
+      "stateRate": 0.0725,
+      "combinedLow": 0.0725,
+      "combinedHigh": 0.1125,
+      "docFeeTaxed": true,
+      "rebateTaxed": null,
+      "docFeeCap": 85,
+      "tradeInCredit": "no",
+      "yearlyValueTax": { "applies": true, "roughRate": 0.0065 },
+      "privatePartyRule": null,
+      "specialLineItems": ["California tire fee: $1.75 per new tire, stated separately, not itself subject to sales tax"],
+      "source": {
+        "title": "CDTFA, California City & County Sales & Use Tax Rates",
+        "url": "https://www.cdtfa.ca.gov/taxes-and-fees/sales-use-tax-rates.htm",
+        "checked": "2026-11-19"
+      },
+      "note": "No trade-in credit: tax applies to the full price, including the dealer's trade-in allowance, per CDTFA's own annotations (Rev. and Tax. Code 6012(b)(2), Regulation 1654(b)(1), at cdtfa.ca.gov/lawguides/vol2/suta/140-0500.html). CDTFA's own page (effective Oct 1, 2026) confirms a 7.25% statewide base plus district add-ons of 0.10% to 2.00%, a 9.25% arithmetic ceiling, but it also says some addresses stack more than one district. combinedHigh here (0.1125) is the combined rate in a stacked-district city. Look up the exact rate for the buyer's registration address on CDTFA's own county-and-city table. The $85 doc fee cap (Vehicle Code 4456.5) may be lower for dealers outside the DMV's private-industry partner program, so verify which applies. The yearly figure is a state fee (the vehicle license fee, about 0.65% of value, paid at registration each year), not a county property tax."
+    },
+    "GA": {
+      "name": "Georgia",
+      "regime": "title-excise-highway-use",
+      "stateRate": 0.07,
+      "combinedLow": 0.07,
+      "combinedHigh": 0.07,
+      "docFeeTaxed": null,
+      "rebateTaxed": null,
+      "docFeeCap": null,
+      "tradeInCredit": "dealer-only",
+      "yearlyValueTax": { "applies": false, "roughRate": null },
+      "privatePartyRule": "The Title Ad Valorem Tax (TAVT) is 7% of the state's own fair market value for the model, from the Department of Revenue's assessment manual (or a designated used-car market guide), regardless of the price actually paid. A trade-in reduces the taxable base only on a dealer sale, not a private-party sale.",
+      "specialLineItems": [],
+      "source": {
+        "title": "Georgia Department of Revenue, Title Ad Valorem Tax (TAVT) FAQ",
+        "url": "https://dor.georgia.gov/title-ad-valorem-tax-tavt-faq",
+        "checked": "2026-11-19"
+      },
+      "note": "TAVT replaces the sales tax on the vehicle. It's a one-time title tax paid once at titling, not layered on top of a separate sales tax. A reduced 3% rate applies to a vehicle already titled elsewhere by a new Georgia resident, and 0.5% to a family transfer where TAVT was already paid."
+    },
+    "NC": {
+      "name": "North Carolina",
+      "regime": "title-excise-highway-use",
+      "stateRate": 0.03,
+      "combinedLow": 0.03,
+      "combinedHigh": 0.03,
+      "docFeeTaxed": true,
+      "rebateTaxed": null,
+      "docFeeCap": null,
+      "tradeInCredit": "dealer-only",
+      "yearlyValueTax": { "applies": true, "roughRate": null },
+      "privatePartyRule": "A private-party sale is taxed on NCDMV's own assessed \"computer value\" for the vehicle, not the price actually paid.",
+      "specialLineItems": [],
+      "source": {
+        "title": "NCDMV, Vehicle Titles and Registration Taxes and Fees",
+        "url": "https://www.ncdot.gov/dmv/title-registration/taxes/Pages/default.aspx",
+        "checked": "2026-11-19"
+      },
+      "note": "The 3% highway use tax is a one-time tax at titling, in place of a sales tax, applied to price plus any doc fee minus a dealer trade-in. Separately, North Carolina bills an annual vehicle property tax with registration renewal (\"Tag & Tax Together\"). That rate is the local county/city property-tax rate, so there's no single statewide figure to give here: roughRate is null rather than a guess. Dealer doc fees typically run about $500 to $800."
+    },
+    "OR": {
+      "name": "Oregon",
+      "regime": "none",
+      "stateRate": 0,
+      "combinedLow": 0,
+      "combinedHigh": 0,
+      "docFeeTaxed": null,
+      "rebateTaxed": null,
+      "docFeeCap": null,
+      "tradeInCredit": null,
+      "yearlyValueTax": { "applies": false, "roughRate": null },
+      "privatePartyRule": "No sales tax applies to a private-party sale.",
+      "specialLineItems": [],
+      "source": {
+        "title": "Oregon Department of Revenue, Vehicle Privilege and Use Taxes",
+        "url": "https://www.oregon.gov/dor/programs/businesses/Pages/Vehicle-privilege-and-use-taxes.aspx",
+        "checked": "2026-11-19"
+      },
+      "note": "Oregon has no state or local sales tax. A dealer selling a vehicle that's never been titled in Oregon owes a separate 0.5% vehicle privilege tax and may itemize and pass that amount to the buyer. It's a tax on the dealer, collected through the buyer, so it's left out of taxRate here."
+    },
+    "VA": {
+      "name": "Virginia",
+      "regime": "sales",
+      "stateRate": 0.0415,
+      "combinedLow": 0.0415,
+      "combinedHigh": 0.0415,
+      "docFeeTaxed": true,
+      "rebateTaxed": null,
+      "docFeeCap": null,
+      "tradeInCredit": "no",
+      "yearlyValueTax": { "applies": true, "roughRate": 0.035 },
+      "privatePartyRule": null,
+      "specialLineItems": [],
+      "source": {
+        "title": "Virginia DMV, Sales and Use Tax (SUT)",
+        "url": "https://www.dmv.virginia.gov/vehicles/taxes-fees/sut",
+        "checked": "2026-11-19"
+      },
+      "note": "The Code of Virginia (58.1-2402) carries two contingent versions of this rate (4.15% and 3%), tied to a 2019 transportation-funding trigger. The DMV's own current page states 4.15%, with a $75 minimum tax, so that's the figure used here. By statute (58.1-2405), no trade-in credit reduces this tax, unlike most states. The yearly figure is a local personal property tax, billed by the city or county where the car is garaged, not a state tax. Rates run roughly 1.6% to 5% of assessed value depending on locality (examples: Prince William County $3.50/$100 for 2026, Loudoun County $3.09/$100 for 2026), often with a relief percentage on the first $20,000 of value. 0.035 here is a rough statewide midpoint, not any specific locality's rate."
+    },
+    "NY": {
+      "name": "New York",
+      "regime": "sales",
+      "stateRate": 0.04,
+      "combinedLow": 0.07,
+      "combinedHigh": 0.08875,
+      "docFeeTaxed": null,
+      "rebateTaxed": null,
+      "docFeeCap": 175,
+      "tradeInCredit": "yes",
+      "yearlyValueTax": { "applies": false, "roughRate": null },
+      "privatePartyRule": null,
+      "specialLineItems": [],
+      "source": {
+        "title": "New York State Department of Taxation and Finance, Publication 838 (A Guide to Sales Tax for Automobile Dealers)",
+        "url": "https://www.tax.ny.gov/pdf/publications/sales/pub838.pdf",
+        "checked": "2026-11-19"
+      },
+      "note": "Tax is based on the combined rate where the buyer lives, not where the dealer is, so look up the buyer's own locality. The high end (8.875%) is New York City's combined rate. Other localities run lower. The $175 doc fee cap comes from regulation 15 NYCRR 78.19."
+    }
+  }
+}

@@ -1,0 +1,465 @@
+{
+  "sample": true,
+  "title": "Compact AWD Crossover Shortlist",
+  "buyer": {
+    "location": "Sample City, ST",
+    "role": "Main family car, with a rear-facing car seat by spring",
+    "budget": {
+      "amount": 32000,
+      "type": "cash",
+      "otd": true
+    },
+    "criteria": [
+      "Sample data: every model, price, rating and dealer on this page is made up.",
+      "AWD, and no CVT",
+      "Regular fuel preferred",
+      "Fits a rear-facing seat behind a 6'1\" driver",
+      "Under 184 inches long, to fit the current garage spot"
+    ],
+    "zip": "00000"
+  },
+  "prepared": {
+    "date": "Nov 19, 2026"
+  },
+  "assumptions": {
+    "years": 5,
+    "milesPerYear": 12000,
+    "regular": 3.29,
+    "premium": 3.99,
+    "taxRate": 0.095,
+    "docFee": 378,
+    "title": 165,
+    "plates": 151,
+    "registrationPerYear": 151,
+    "privateSaleDiscount": 0.1,
+    "notes": [
+      "Taxes and fees are a state-level estimate for an example state: 9.5% vehicle sales tax plus about $700 for title, registration and doc fee. Local taxes and any yearly property tax aren't included.",
+      "Prices are at asking. None of these dealers was assumed to negotiate.",
+      "Insurance comes from example quotes. Maintenance is priced at shop rates."
+    ],
+    "sources": [
+      {
+        "title": "Example: AAA state gas price average",
+        "url": "https://gasprices.aaa.com/"
+      }
+    ],
+    "localeBasis": "estimate"
+  },
+  "financing": {
+    "down": 7500,
+    "months": 48,
+    "apr": null
+  },
+  "constraint": {
+    "name": "Car Seat Fit",
+    "intro": "A rear-facing seat behind a tall driver is the test that rules cars out. Measurements are second-row legroom and the seat-to-seatback gap with the driver's seat set for a 6'1\" driver.",
+    "columns": [
+      "Second-row legroom",
+      "Gap with driver set (measured)",
+      "LATCH access",
+      "Verdict"
+    ]
+  },
+  "models": [
+    {
+      "id": "northline",
+      "name": "Northline Compact",
+      "year": 2024,
+      "trim": "EX AWD",
+      "condition": "CPO",
+      "spectrum": 1,
+      "spectrumNote": "A reliable appliance. Proven engine, conventional automatic, cheap parts.",
+      "price": 27400,
+      "priceNote": "Asking, one-price store",
+      "mpg": {
+        "city": 27,
+        "hwy": 33,
+        "combined": 29
+      },
+      "fuelGrade": "regular",
+      "maintenance5yr": 3200,
+      "repairs5yr": 600,
+      "repairsNote": "Range $300 to $900: mostly brakes and a battery.",
+      "resaleFairValue5yr": 15800,
+      "resaleNote": "Example curve: about 42% loss over 5 years from today's fair value.",
+      "warranty": "CPO powertrain to 7 years / 100,000 miles",
+      "warrantyRunway": "About 5 years left",
+      "story": [
+        "The Northline is the safe answer. It's a third-year design with an engine that has been in production for a decade.",
+        "It won't excite you, but it will start every morning and cost the least to own."
+      ],
+      "strengths": [
+        "Lowest 5-year cost",
+        "Regular fuel",
+        "Long CPO powertrain coverage"
+      ],
+      "watchouts": [
+        "Road noise on the highway",
+        "Infotainment feels dated"
+      ],
+      "failureModes": [
+        {
+          "item": "Infotainment reboots",
+          "why": "A software bug in early units",
+          "cost": "$0 (software update)",
+          "status": "Ask the dealer if it was applied"
+        }
+      ],
+      "safety": {
+        "nhtsa": "5 stars overall",
+        "iihs": "Top Safety Pick"
+      },
+      "reviews": [
+        {
+          "title": "Example review",
+          "source": "Sample",
+          "url": "https://example.com/review-northline",
+          "summary": "Comfortable, efficient, forgettable to drive. Strong reliability record."
+        }
+      ],
+      "constraint": [
+        "38.0 in",
+        "4.5 in",
+        "Easy",
+        "Fits"
+      ],
+      "inspection": [
+        "Confirm the infotainment update",
+        "Check rear tire wear for alignment",
+        "Scan for stored codes"
+      ],
+      "walkAway": [
+        "Any accident with frame or airbag work",
+        "Missing CPO paperwork"
+      ],
+      "sources": [
+        {
+          "title": "Example: listing",
+          "url": "https://example.com/listing-northline",
+          "checked": "Nov 19, 2026"
+        }
+      ],
+      "insurance5yr": 7400,
+      "insuranceNote": "Example quote: $1,480 a year"
+    },
+    {
+      "id": "ardent",
+      "name": "Ardent Wagon",
+      "year": 2023,
+      "trim": "Sport AWD",
+      "condition": "CPO",
+      "spectrum": 3,
+      "spectrumNote": "Middle of the road. More fun to drive, with one known weak point.",
+      "price": 28900,
+      "priceNote": "Asking at a traditional dealer. Target $27,900.",
+      "mpg": {
+        "city": 24,
+        "hwy": 31,
+        "combined": 27
+      },
+      "fuelGrade": "premium-recommended",
+      "maintenance5yr": 3900,
+      "repairs5yr": 1400,
+      "repairsNote": "Range $600 to $2,200: water pump risk plus brakes.",
+      "resaleFairValue5yr": 15200,
+      "resaleNote": "Example curve: about 45% loss over 5 years.",
+      "warranty": "CPO powertrain to 6 years / 80,000 miles",
+      "warrantyRunway": "About 3 years left",
+      "story": [
+        "The Ardent is the enthusiast pick. It steers and rides better than the other two, and the wagon body holds more than its size suggests.",
+        "The catch is a water pump that fails early on this engine. It's a known, priced risk."
+      ],
+      "strengths": [
+        "Best to drive",
+        "Most cargo for its length"
+      ],
+      "watchouts": [
+        "Premium recommended",
+        "Water pump weak point"
+      ],
+      "failureModes": [
+        {
+          "item": "Water pump",
+          "why": "Plastic housing cracks with heat cycles",
+          "cost": "$900 to $1,300",
+          "status": "Not done on this car"
+        }
+      ],
+      "safety": {
+        "nhtsa": "5 stars overall",
+        "iihs": "Top Safety Pick"
+      },
+      "reviews": [
+        {
+          "title": "Example review",
+          "source": "Sample",
+          "url": "https://example.com/review-ardent",
+          "summary": "The driver's choice in the class. Watch the cooling system."
+        }
+      ],
+      "constraint": [
+        "36.5 in",
+        "2.0 in",
+        "Tight",
+        "Fits, barely"
+      ],
+      "inspection": [
+        "Look for pink crust at the water pump",
+        "Check the coolant level cold",
+        "Scan for stored codes"
+      ],
+      "walkAway": [
+        "Coolant loss or a sweet smell",
+        "Dealer won't put the CPO terms in writing"
+      ],
+      "sources": [
+        {
+          "title": "Example: listing",
+          "url": "https://example.com/listing-ardent",
+          "checked": "Nov 19, 2026"
+        }
+      ],
+      "insurance5yr": 8100,
+      "insuranceNote": "Example quote: $1,620 a year"
+    },
+    {
+      "id": "vela",
+      "name": "Vela Premium",
+      "year": 2022,
+      "trim": "Luxury AWD",
+      "condition": "Used",
+      "spectrum": 5,
+      "spectrumNote": "Premium value with a maintenance tax. The most car for the money, and the most risk.",
+      "price": 26500,
+      "priceNote": "Asking, traditional dealer",
+      "mpg": {
+        "city": 22,
+        "hwy": 29,
+        "combined": 25
+      },
+      "fuelGrade": "premium",
+      "maintenance5yr": 5200,
+      "repairs5yr": 3000,
+      "repairsNote": "Range $1,500 to $4,500: air suspension and electronics.",
+      "resaleFairValue5yr": 11500,
+      "resaleNote": "Example curve: about 57% loss over 5 years.",
+      "warranty": "Factory warranty expired",
+      "warrantyRunway": "None",
+      "story": [
+        "The Vela is the nicest car here by a wide margin. It also has no warranty left and an air suspension that ages badly in salted winters.",
+        "It fails your stated priority of a low-drama main car, so it's here as a benchmark."
+      ],
+      "strengths": [
+        "Best interior",
+        "Quietest on the highway"
+      ],
+      "watchouts": [
+        "No warranty",
+        "Premium required",
+        "Air suspension"
+      ],
+      "failureModes": [
+        {
+          "item": "Air suspension struts",
+          "why": "Bladders crack with age and road salt",
+          "cost": "$1,800 to $2,800 per axle",
+          "status": "Original"
+        }
+      ],
+      "safety": {
+        "nhtsa": "Not rated",
+        "iihs": "Top Safety Pick+"
+      },
+      "reviews": [
+        {
+          "title": "Example review",
+          "source": "Sample",
+          "url": "https://example.com/review-vela",
+          "summary": "Luxurious and quiet. Owners report suspension costs after year five."
+        }
+      ],
+      "constraint": [
+        "39.0 in",
+        "5.0 in",
+        "Easy",
+        "Fits"
+      ],
+      "inspection": [
+        "Check that the car sits level after parking overnight",
+        "Cycle the ride-height modes",
+        "Scan every module"
+      ],
+      "walkAway": [
+        "Any suspension warning",
+        "A sag on one corner"
+      ],
+      "sources": [
+        {
+          "title": "Example: listing",
+          "url": "https://example.com/listing-vela",
+          "checked": "Nov 19, 2026"
+        }
+      ],
+      "insurance5yr": 9600,
+      "insuranceNote": "Example quote: $1,920 a year"
+    }
+  ],
+  "listings": [
+    {
+      "model": "northline",
+      "dealer": "Example One-Price Store",
+      "price": 27400,
+      "miles": 18200,
+      "pricing": "One-price",
+      "url": "https://example.com/listing-northline",
+      "notes": "7-day return. Get it in writing.",
+      "checked": "Nov 19, 2026"
+    },
+    {
+      "model": "ardent",
+      "dealer": "Example Dealer",
+      "price": 28900,
+      "miles": 24100,
+      "pricing": "Negotiates",
+      "url": "https://example.com/listing-ardent",
+      "notes": "Ask for the water pump to be done before delivery.",
+      "checked": "Nov 19, 2026"
+    },
+    {
+      "model": "northline",
+      "dealer": "Example Motors West",
+      "price": 26900,
+      "miles": 24800,
+      "pricing": "Negotiates",
+      "url": "https://example.com/listing-northline-2",
+      "checked": "Nov 19, 2026",
+      "notes": "41 days on market, one price drop. Front pads at 4 mm."
+    }
+  ],
+  "stage": "negotiate",
+  "summary": [
+    "Three CPO and used crossovers made the shortlist. The Northline Compact costs the least to own over 5 years, insurance included, and clears every criterion.",
+    "The Ardent Wagon is the better drive, but its asking price runs $375 over the budget and it carries a known water pump risk. The Vela Premium is the nicest car here and the most expensive to keep.",
+    "Next: send the opening offer on the Northline, and book a test drive with the car seat."
+  ],
+  "negotiation": {
+    "intro": "Targets come from six comparable listings within 50 miles. Negotiate the out-the-door price in writing before visiting.",
+    "cars": [
+      {
+        "model": "northline",
+        "target": 26400,
+        "walkAway": 27400,
+        "opening": 25600,
+        "levers": [
+          {
+            "lever": "Competing listing",
+            "evidence": "Example Motors West has the same trim at $26,900 with 6,600 more miles."
+          },
+          {
+            "lever": "Return window",
+            "evidence": "The one-price store won't move on price. Ask for the 7-day return in writing and a fresh set of wiper blades and cabin filter before delivery."
+          }
+        ],
+        "script": [
+          "I'm ready to buy this week. Comparable cars within 50 miles list from $25,900 to $27,400.",
+          "I can do $25,600 plus tax, title and plates. Please send a written out-the-door quote."
+        ]
+      },
+      {
+        "model": "ardent",
+        "target": 27900,
+        "walkAway": 28400,
+        "opening": 27200,
+        "levers": [
+          {
+            "lever": "Known failure item",
+            "evidence": "The water pump hasn't been replaced. Ask the dealer to do it before delivery, or take $1,100 off."
+          },
+          {
+            "lever": "Days on market",
+            "evidence": "Listed 52 days with one price drop."
+          }
+        ],
+        "script": [
+          "I like the car, but it needs the water pump done, a $900 to $1,300 job on this engine.",
+          "I can do $27,200 out the door before fees, or $28,000 with the pump replaced before delivery."
+        ]
+      }
+    ]
+  },
+  "firstYear": {
+    "model": "northline",
+    "intro": "Built for the Northline Compact at 18,200 miles, from the example factory schedule and the car's records. Example values only.",
+    "first30": [
+      "Title, registration and any local sticker, by the deadlines in the locale research.",
+      "Check recalls by VIN.",
+      "Register the CPO warranty with the maker.",
+      "Record a baseline: tread by position, pad thickness, battery test and a code scan.",
+      "Get the second key and the owner's manual if the car came without them."
+    ],
+    "schedule": [
+      {
+        "when": "Month 1",
+        "task": "Cabin and engine air filters",
+        "why": "No record of either. A cheap redo beats a guess.",
+        "who": "DIY",
+        "cost": "$35 to $50",
+        "low": 35,
+        "high": 50
+      },
+      {
+        "when": "Month 1",
+        "task": "Infotainment software update",
+        "why": "Fixes the known reboot bug if it wasn't applied.",
+        "who": "Shop",
+        "cost": "$0 (CPO)",
+        "low": 0,
+        "high": 0
+      },
+      {
+        "when": "25,000 mi or month 6",
+        "task": "Oil and filter, tire rotation",
+        "why": "Factory interval 7,500 mi or 12 months.",
+        "who": "Shop",
+        "cost": "$90 to $130",
+        "low": 90,
+        "high": 130
+      },
+      {
+        "when": "Month 9",
+        "task": "Brake fluid flush",
+        "why": "Records show no flush. Factory interval 3 years.",
+        "who": "Shop",
+        "cost": "$110 to $160",
+        "low": 110,
+        "high": 160
+      },
+      {
+        "when": "30,000 mi or month 12",
+        "task": "Oil and filter, tire rotation, inspection",
+        "why": "Factory schedule.",
+        "who": "Shop",
+        "cost": "$150 to $220",
+        "low": 150,
+        "high": 220
+      }
+    ],
+    "sources": [
+      {
+        "title": "Example: factory maintenance schedule",
+        "url": "https://example.com/schedule",
+        "checked": "Nov 19, 2026"
+      }
+    ]
+  },
+  "recommendation": {
+    "pick": "northline",
+    "paragraphs": [
+      "Buy the Northline Compact. It has the lowest 5-year cost by about $6,400, fits the car seat with room to spare, and carries the longest warranty runway.",
+      "Pick the Ardent Wagon only if the test drive wins you over, and only with the water pump done first and the price near $27,900."
+    ],
+    "avoid": [
+      "The Vela Premium: no warranty left and a known four-figure suspension bill, on a car that has to be reliable."
+    ]
+  }
+}

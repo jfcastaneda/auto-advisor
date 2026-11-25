@@ -1,0 +1,15 @@
+# Design-tool working notes
+.impeccable/
+
+# OS and Python
+.DS_Store
+__pycache__/
+.pytest_cache/
+
+# Built packages
+*.skill
+*.zip
+
+# Launch video and its working files
+brag-output/
+node_modules/
